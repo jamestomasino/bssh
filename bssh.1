@@ -44,7 +44,7 @@ This is the same as setting `key_types' in the configuration file.
 
 .SH CONFIGURATION FILE
 .TP
-.I $XDG_CONFIG_HOME/BSSH/config
+.I $XDG_CONFIG_HOME/bssh/config
 Configuration settings in this file will override default settings. Each
 setting is a string that should be written as `NAME="VALUE"'. Valid settings
 are `pattern_prefix', `key_locations', and `key_types'
@@ -66,7 +66,10 @@ This is the same as setting `key_locations' in the configuration file.
 .TP
 .B BW_PASSWORD
 Bitwarden master password (optional). If set, this environment variable will be
-used to automatically authenticate your bitwarden session.
+used to automatically authenticate your bitwarden session. Alternatively,
+a file at $XDG_CONFIG_HOME/Bitwarden CLI/bw.pass containing the password will
+provide the same functionality. If neither exist the user will be prompted for
+the password.
 
 .SH EXAMPLES
 If you have an ssh key located at ~/.ssh/work/id_rsa, it can be loaded by
