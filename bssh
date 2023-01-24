@@ -79,14 +79,8 @@ main () {
   # Load config, overwrites hardcoded defaults
   if [ -n "$XDG_CONFIG_HOME" ]; then
     config="${XDG_CONFIG_HOME}/bssh/config"
-    if [ -n "$BITWARDENCLI_APPDATA_DIR" ]; then
-      bwconfig="$BITWARDENCLI_APPDATA_DIR"
-    else
-      bwconfig="${XDG_CONFIG_HOME}/Bitwarden CLI"
-    fi
   else
     config="${HOME}/.config/bssh/config"
-    bwconfig="${HOME}/.config/Bitwarden CLI"
   fi
   if [ -f "$config" ]; then
     # shellcheck disable=SC1090
@@ -135,6 +129,13 @@ main () {
   if [ -n "${BW_PASSWORD}" ]; then
     session=$(bw unlock --raw --passwordenv "${BW_PASSWORD}")
   elif [ -f "${bwconfig}/bw.pass" ]; then
+    if [ -n "${BITWARDENCLI_APPDATA_DIR}" ]; then
+      bwconfig="${BITWARDENCLI_APPDATA_DIR}"
+    elif [ -n "$XDG_CONFIG_HOME" ]; then
+      bwconfig="${XDG_CONFIG_HOME}/Bitwarden CLI"
+    else
+      bwconfig="${HOME}/.config/Bitwarden CLI"
+    fi
     session=$(bw unlock --raw --passwordfile "${bwconfig}/bw.pass")
   else
     session=$(bw unlock --raw)

@@ -1,21 +1,21 @@
-.TH LSSH 1 "17 Jun 2022" "version 2022.06.17"
+.TH BSSH 1 "24 Jan 2023" "version 2023.01.24"
 
 .SH NAME
-lssh \- a wrapper for Lastpass CLI and ssh-agent
+BSSH \- a wrapper for Bitwarden CLI and ssh-agent
 
 .SH SYNOPSIS
-lssh [ -hvpt ] [ssh key name]
+BSSH [ -hvpt ] [ssh key name]
 
 .SH DESRIPTION
-lssh quickly activates ssh keys by name, filling passwords via Lastpass CLI, and
+BSSH quickly activates ssh keys by name, filling passwords via Bitwarden CLI, and
 adding them to ssh-agent. Keys are activated for 1-hour at a time.
 
 The ssh key name provided to
-.B lssh
+.B BSSH
 will be used to look up both the key itself and the password for the key. If
 that key has a password,
-.B lssh
-will search Lastpass for an entry named `SSH: [ssh key name]' and autofill the
+.B BSSH
+will search Bitwarden for an entry named `SSH: [ssh key name]' and autofill the
 password with the results. If that entry is not found, `[ssh key name]' will
 also be attempted before giving up on a password search. The key will be passed
 to the ssh-agent regardless.
@@ -29,25 +29,25 @@ Shows simple help.
 Shows current version number.
 .TP
 .B -p [pattern prefix]
-Set LastPass prefix pattern for the title search. The default pattern is
+Set Bitwarden prefix pattern for the title search. The default pattern is
 `SSH:'. If your key is named `testkey', then the default pattern will search
-`SSH: testkey' in LastPass for the key password.
+`SSH: testkey' in Bitwarden for the key password.
 
 This is the same as setting `pattern_prefix' in the configuration file.
 .TP
 .B -t [type]
 Set the SSH key type to test for. By default
-.B lssh
+.B BSSH
 will search for `id_ed25519', `id_dsa`, and `id_rsa` in that order.
 
 This is the same as setting `key_types' in the configuration file.
 
 .SH CONFIGURATION FILE
 .TP
-.I $XDG_CONFIG_HOME/lssh/config
+.I $XDG_CONFIG_HOME/BSSH/config
 Configuration settings in this file will override default settings. Each
 setting is a string that should be written as `NAME="VALUE"'. Valid settings
-are `pattern_prefix', `lastpass_user', `key_locations', and `key_types'
+are `pattern_prefix', `key_locations', and `key_types'
 
 .SH ENVIRONMENT VARIABLES
 Environment variables will override the default settings and any configuration
@@ -64,22 +64,20 @@ Unless otherwise defined, this variable defaults to ~/.ssh/
 
 This is the same as setting `key_locations' in the configuration file.
 .TP
-.B LASTPASS_USER
-Login username to Lastpass. This is used to initiate a login if you are not
-already logged in when initiating lssh
-
-This is the same as setting `lastpass_user' in the configuration file.
+.B BW_PASSWORD
+Bitwarden master password (optional). If set, this environment variable will be
+used to automatically authenticate your bitwarden session.
 
 .SH EXAMPLES
 If you have an ssh key located at ~/.ssh/work/id_rsa, it can be loaded by
 entering:
 
-$ lssh work
+$ BSSH work
 
 .SH DEPENDENCIES
 .TP
-.B lpass
-The Lastpass CLI client
+.B bw
+The Bitwarden CLI client
 .TP
 .B expect
 programmed dialogue with interactive programs
