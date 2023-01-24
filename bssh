@@ -1,0 +1,167 @@
+#!/bin/sh
+version="2023.01.24"
+arg_options="hvp:t:"
+key=""
+pattern_prefix="SSH:"
+key_locations="${HOME}/.ssh/"
+key_types="id_ed25519 id_dsa id_rsa"
+
+# Required: bw (bitwarden cli)
+if ! command -v bw > /dev/null; then
+  printf "Bitwarden CLI is required.\n"
+  exit 2
+fi
+
+# Required: expect
+if ! command -v expect > /dev/null; then
+  printf "'expect' is required.\n"
+  exit 2
+fi
+
+show_help () {
+  cat > /dev/stdout << END
+bssh [options] [ssh-key]
+
+OPTIONAL FLAGS:
+  -h                          Show this help
+  -v                          Show current version info
+  -p [pattern prefix]         Set Bitwarden prefix pattern (default "SSH:")
+  -t [type]                   Set key type
+
+END
+}
+
+parse_input () {
+  if ! parsed=$(getopt $arg_options "$@"); then
+    printf "Invalid input\\n"
+    exit 2
+  fi
+
+  eval set -- "$parsed"
+
+  while true; do
+    case "$1" in
+      -h)
+        show_help
+        exit 0
+        ;;
+      -v)
+        printf "%s\\n" "$version"
+        exit 0
+        ;;
+      -p)
+        shift
+        pattern_prefix="$1"
+        shift
+        ;;
+      -t)
+        shift
+        key_types="$1"
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        printf "Internal error."
+        exit 3
+        ;;
+    esac
+  done
+
+  if [ $# -gt 0 ]; then
+    key="$1"
+  fi
+}
+
+main () {
+  # Load config, overwrites hardcoded defaults
+  if [ -n "$XDG_CONFIG_HOME" ]; then
+    config="${XDG_CONFIG_HOME}/bssh/config"
+    if [ -n "$BITWARDENCLI_APPDATA_DIR" ]; then
+      bwconfig="$BITWARDENCLI_APPDATA_DIR"
+    else
+      bwconfig="${XDG_CONFIG_HOME}/Bitwarden CLI"
+    fi
+  else
+    config="${HOME}/.config/bssh/config"
+    bwconfig="${HOME}/.config/Bitwarden CLI"
+  fi
+  if [ -f "$config" ]; then
+    # shellcheck disable=SC1090
+    . "$config"
+  fi
+
+  # env vars override config file
+  key_locations="${SSH_KEY_LOCATIONS:-${key_locations}}"
+
+  # command line switches override everything
+  parse_input "$@"
+
+  if [ -z "${key}" ]; then
+    printf "You need to specify a key name.\n"
+    exit 2
+  fi
+
+  # Try to find the passed key path / name from possible key locations.
+  # Add space-separated path locations for your keys to $SSH_KEY_LOCATIONS
+  # env variable.
+  for path in $key_locations; do
+    if [ -f "${path}${key}" ]; then
+      printf "Found key at: %s\\n" "${path}${key}"
+      KEY_ID="${path}${key}"
+      break;
+    fi
+    if [ -d "${path}${key}" ]; then
+      # check keys in order of crypto awesomeness
+      for type in $key_types; do
+        if [ -f "${path}${key}/${type}" ]; then
+          printf "Found key at: %s\\n" "${path}${key}/${type}"
+          KEY_ID="${path}${key}/${type}"
+          break;
+        fi
+      done
+    fi
+  done
+
+  # If no key is found there's nothing to activate. End script
+  if [ -z "$KEY_ID" ]; then
+    printf "Could not find key file.\n"
+    exit 1
+  fi
+
+  # Unlock bitwarden and get new session key
+  if [ -n "${BW_PASSWORD}" ]; then
+    session=$(bw unlock --raw --passwordenv "${BW_PASSWORD}")
+  elif [ -f "${bwconfig}/bw.pass" ]; then
+    session=$(bw unlock --raw --passwordfile "${bwconfig}/bw.pass")
+  else
+    session=$(bw unlock --raw)
+  fi
+
+  # Retrieve key from Bitwarden. If logged in but not recently authenticated
+  password=$(bw --session "$session" get password "${pattern_prefix} ${key}" 2> /dev/null)
+
+  # If the "SSH: xxx" pattern failed, try the key directly
+  if [ -z "$password" ]; then
+    password=$(bw --session "$session" get password "${key}" 2> /dev/null)
+  fi
+
+  # If we found a password, apply it to the key
+  if [ -n "$password" ]; then
+  # awkward tabbing due to EOF structure
+expect <<EOF >/dev/null
+spawn ssh-add -t 3600 ${KEY_ID}
+expect {
+  "Enter passphrase" { send "$password\r"; exp_continue }
+  eof
+}
+EOF
+  else
+    printf "Unable to get password. Activating key without password.\n"
+    ssh-add -t 3600 "${KEY_ID}"
+  fi
+}
+
+main "$@"
