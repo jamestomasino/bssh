@@ -26,4 +26,7 @@ uninstall: ## system uninstall
 	rm -f $(bindir)/bssh
 	rm -f $(sharedir)/man/man1/bssh.1
 
-.PHONY: install uninstall
+README.txt: bssh.1 ## generate readme file
+	MANWIDTH=80 man ./bssh.1 | col -bx > README.txt
+
+.PHONY: install uninstall help

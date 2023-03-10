@@ -40,7 +40,7 @@ OPTIONS
               file.
 
 CONFIGURATION FILE
-       $XDG_CONFIG_HOME/BSSH/config
+       $XDG_CONFIG_HOME/bssh/config
               Configuration settings in this file will override  default  set‐
               tings.  Each  setting  is  a  string  that  should be written as
               `NAME="VALUE"'. Valid settings are `pattern_prefix',  `key_loca‐
@@ -66,10 +66,13 @@ ENVIRONMENT VARIABLES
        BW_PASSWORD
               Bitwarden master password (optional). If set,  this  environment
               variable will be used to automatically authenticate your bitwar‐
-              den session.
+              den session. Alternatively, a file at $XDG_CONFIG_HOME/Bitwarden
+              CLI/bw.pass  containing the password will provide the same func‐
+              tionality. If neither exist the user will be  prompted  for  the
+              password.
 
 EXAMPLES
-       If you have an ssh key located at ~/.ssh/work/id_rsa, it can be  loaded
+       If  you have an ssh key located at ~/.ssh/work/id_rsa, it can be loaded
        by entering:
 
        $ BSSH work
@@ -82,4 +85,4 @@ DEPENDENCIES
 AUTHOR
        James Tomasino
 
-version 2023.01.24                24 Jan 2023                          BSSH(1)
+version 2023.03.10                10 Mar 2023                          BSSH(1)
